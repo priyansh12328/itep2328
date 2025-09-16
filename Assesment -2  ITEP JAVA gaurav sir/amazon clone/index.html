@@ -1,0 +1,274 @@
+<!-- Save this file as: index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShopClone — Home</title>
+
+  <!-- Basic styles to look nice without external libs -->
+  <style>
+    :root{
+      --brand:#131921;
+      --accent:#ffd814;
+      --muted:#666;
+      --card:#fff;
+      --bg:#f6f7f8;
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;background:var(--bg);color:#111}
+    header{background:var(--brand);color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center;position:sticky;top:0;z-index:10}
+    .brand{font-weight:700;font-size:20px;margin-right:12px}
+    .search{flex:1;display:flex;gap:8px}
+    .search input{flex:1;padding:8px;border-radius:6px;border:0;outline:0}
+    .search button{background:var(--accent);border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+    .nav-actions{display:flex;gap:12px;align-items:center}
+    main{max-width:1100px;margin:20px auto;padding:0 16px}
+    .hero{display:flex;gap:20px;align-items:center;margin-bottom:20px}
+    .hero .banner{flex:1;background:linear-gradient(90deg, #fff 0%, #f0f0f0 100%);padding:20px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);padding:12px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:8px}
+    .card img{width:100%;height:140px;object-fit:cover;border-radius:6px}
+    .price{font-weight:700}
+    footer{padding:20px;text-align:center;color:var(--muted);margin-top:40px}
+    .btn{background:var(--brand);color:#fff;border:0;padding:8px 10px;border-radius:6px;cursor:pointer}
+    .cart-badge{background:#ff4136;color:#fff;border-radius:999px;padding:2px 8px;font-weight:700;margin-left:6px}
+    @media (max-width:600px){ .hero{flex-direction:column} }
+  </style>
+</head>
+<body>
+
+  <!-- Header: brand, search, links -->
+  <header>
+    <div class="brand">ShopClone</div>
+
+    <!-- Search UI -->
+    <div class="search" role="search" aria-label="Site search">
+      <input id="q" type="search" placeholder="Search for products, brands and more" aria-label="Search input" />
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <!-- Navigation actions: cart and login -->
+    <div class="nav-actions" role="navigation" aria-label="User navigation">
+      <a href="#" id="loginLink" style="color:#fff;text-decoration:none">Login</a>
+      <button id="cartBtn" class="btn" aria-label="Open cart">Cart <span id="cartCount" class="cart-badge">0</span></button>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main>
+    <!-- Hero / promotional area -->
+    <section class="hero" aria-label="Promotions">
+      <div class="banner">
+        <h1 style="margin:0 0 8px 0">Deals for you</h1>
+        <p style="margin:0;color:var(--muted)">Hand-picked products and offers — try adding to cart to test checkout flow.</p>
+      </div>
+      <div style="width:260px">
+        <img src="https://picsum.photos/seed/promo/500/300" alt="Promo banner" style="width:100%;border-radius:8px" />
+      </div>
+    </section>
+
+    <!-- Product grid -->
+    <section aria-label="Products">
+      <div class="grid" id="productGrid">
+        <!-- JS will populate product cards here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Simple cart modal (very small) -->
+  <div id="cartModal" style="display:none;position:fixed;right:16px;bottom:16px;width:320px;background:#fff;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:12px;z-index:50">
+    <h3 style="margin:0 0 8px 0">Your Cart</h3>
+    <div id="cartItems" style="max-height:300px;overflow:auto"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <strong id="cartTotal">Total: ₹0.00</strong>
+      <button id="checkoutBtn" class="btn">Checkout</button>
+    </div>
+    <button id="closeCart" style="margin-top:8px;background:#eee;border:0;padding:6px 10px;border-radius:6px;cursor:pointer">Close</button>
+  </div>
+
+  <footer>
+    © <span id="year"></span> ShopClone — simple demo. This is for learning, not a production storefront.
+  </footer>
+
+  <!-- Sample data + behavior (local, no server required) -->
+  <script>
+    // Example product list (in a real app, fetch from backend /api/products)
+    const products = [
+      { id: 'p1', title: 'Wireless Headphones', price_cents: 4999, image: 'https://picsum.photos/seed/1/600/400', description: 'Comfortable over-ear with rich bass.' },
+      { id: 'p2', title: 'Smart Watch', price_cents: 6999, image: 'https://picsum.photos/seed/2/600/400', description: 'Track fitness and notifications.' },
+      { id: 'p3', title: 'Mechanical Keyboard', price_cents: 5999, image: 'https://picsum.photos/seed/3/600/400', description: 'Tactile switches, RGB backlight.' },
+      { id: 'p4', title: 'USB-C Charger 65W', price_cents: 2999, image: 'https://picsum.photos/seed/4/600/400', description: 'Fast charging for laptops and phones.' }
+    ];
+
+    // Render product cards
+    const grid = document.getElementById('productGrid');
+    products.forEach(p => {
+      const el = document.createElement('article');
+      el.className = 'card';
+      el.innerHTML = `
+        <img src="${p.image}" alt="${escapeHtml(p.title)}" />
+        <div style="flex:1">
+          <div style="font-weight:700">${escapeHtml(p.title)}</div>
+          <div style="color:var(--muted);font-size:14px">${escapeHtml(p.description)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="price">₹ ${(p.price_cents/100).toFixed(2)}</div>
+          <div>
+            <button data-id="${p.id}" class="addBtn" style="background:var(--accent);border:0;padding:8px 10px;border-radius:6px;cursor:pointer">Add to Cart</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(el);
+    });
+
+    // ====== CART (localStorage) ======
+    function getCart(){ return JSON.parse(localStorage.getItem('cart') || '[]') }
+    function saveCart(c){ localStorage.setItem('cart', JSON.stringify(c)); updateCartUI() }
+
+    function addToCart(productId){
+      const p = products.find(x=>x.id===productId);
+      if(!p) return;
+      const cart = getCart();
+      const existing = cart.find(i=>i.productId===productId);
+      if(existing) existing.qty += 1;
+      else cart.push({ productId: p.id, title: p.title, price_cents: p.price_cents, qty: 1 });
+      saveCart(cart);
+      flashMsg('Added to cart');
+    }
+
+    // Wire add buttons
+    document.querySelectorAll('.addBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        addToCart(btn.dataset.id);
+      });
+    });
+
+    // Cart UI controls
+    const cartBtn = document.getElementById('cartBtn');
+    const cartModal = document.getElementById('cartModal');
+    const cartItemsDiv = document.getElementById('cartItems');
+    const cartCount = document.getElementById('cartCount');
+    const cartTotal = document.getElementById('cartTotal');
+
+    cartBtn.addEventListener('click', ()=>{ cartModal.style.display = 'block'; renderCartItems(); });
+    document.getElementById('closeCart').addEventListener('click', ()=>{ cartModal.style.display = 'none'; });
+
+    function renderCartItems(){
+      const cart = getCart();
+      cartItemsDiv.innerHTML = '';
+      let total = 0;
+      if(cart.length === 0){
+        cartItemsDiv.innerHTML = '<div style="color:var(--muted)">Your cart is empty.</div>';
+      } else {
+        cart.forEach(item=>{
+          total += item.price_cents * item.qty;
+          const row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.marginBottom = '8px';
+          row.innerHTML = `
+            <div style="flex:1">
+              <div style="font-weight:700">${escapeHtml(item.title)}</div>
+              <div style="color:var(--muted);font-size:13px">₹ ${(item.price_cents/100).toFixed(2)}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" min="1" value="${item.qty}" data-id="${item.productId}" style="width:56px;padding:6px;border-radius:6px;border:1px solid #ddd"/>
+              <button data-remove="${item.productId}" style="background:#eee;border:0;padding:6px;border-radius:6px;cursor:pointer">Remove</button>
+            </div>
+          `;
+          cartItemsDiv.appendChild(row);
+        });
+      }
+      cartTotal.textContent = 'Total: ₹ ' + (total/100).toFixed(2);
+      cartCount.textContent = cart.reduce((s,i)=>s+i.qty,0);
+
+      // wire qty and remove inputs
+      cartItemsDiv.querySelectorAll('input[type="number"]').forEach(inp=>{
+        inp.addEventListener('change', e=>{
+          const id = inp.dataset.id;
+          const q = Math.max(1, Number(inp.value) || 1);
+          const c = getCart().map(it=> it.productId===id ? {...it, qty:q} : it);
+          saveCart(c);
+          renderCartItems();
+        });
+      });
+      cartItemsDiv.querySelectorAll('[data-remove]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-remove');
+          const c = getCart().filter(it=>it.productId!==id);
+          saveCart(c);
+          renderCartItems();
+        });
+      });
+    }
+
+    // Checkout (mock): just clears cart and shows a confirm
+    document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+      const cart = getCart();
+      if(cart.length === 0){ alert('Your cart is empty'); return; }
+      // In a real app: send POST /api/orders with Authorization token etc.
+      localStorage.removeItem('cart');
+      updateCartUI();
+      renderCartItems();
+      alert('Order placed (mock). In a full app this would contact the server and process payment.');
+      cartModal.style.display = 'none';
+    });
+
+    // Update cart count on page load
+    function updateCartUI(){
+      const count = getCart().reduce((s,i)=>s+i.qty,0);
+      cartCount.textContent = count;
+    }
+
+    // Small helper to show a flash message
+    function flashMsg(txt){
+      const el = document.createElement('div');
+      el.textContent = txt;
+      el.style.position = 'fixed';
+      el.style.right = '16px';
+      el.style.bottom = '86px';
+      el.style.background = '#111';
+      el.style.color = '#fff';
+      el.style.padding = '8px 12px';
+      el.style.borderRadius = '8px';
+      el.style.zIndex = 1000;
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 1800);
+    }
+
+    // Escape to avoid HTML injection in this demo
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+    // Search button simple behavior (filters products by title)
+    document.getElementById('searchBtn').addEventListener('click', ()=>{
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      grid.innerHTML = '';
+      (q ? products.filter(p=>p.title.toLowerCase().includes(q)) : products).forEach(p=>{
+        const el = document.createElement('article');
+        el.className = 'card';
+        el.innerHTML = `
+          <img src="${p.image}" alt="${escapeHtml(p.title)}" />
+          <div style="flex:1">
+            <div style="font-weight:700">${escapeHtml(p.title)}</div>
+            <div style="color:var(--muted);font-size:14px">${escapeHtml(p.description)}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="price">₹ ${(p.price_cents/100).toFixed(2)}</div>
+            <div>
+              <button data-id="${p.id}" class="addBtn" style="background:var(--accent);border:0;padding:8px 10px;border-radius:6px;cursor:pointer">Add to Cart</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+      // re-wire new add buttons
+      document.querySelectorAll('.addBtn').forEach(btn => btn.addEventListener('click', ()=>addToCart(btn.dataset.id)));
+    });
+
+    // initialize
+    updateCartUI();
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
